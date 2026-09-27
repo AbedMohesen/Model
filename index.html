@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>بوابة المقررات الأكاديمية | كلية الهندسة وتكنولوجيا المعلومات</title>
+  <meta name="description" content="البوابة الأكاديمية المعتمدة للمقررات الدراسية، تسجيلات المحاضرات، السلايدات، ومجموعات التواصل للطلبة.">
+  
+  <!-- خط Cairo & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- شريط المرافق العلوي (Utility Strip - 36px) -->
+  <aside id="topAnnouncement" class="utility-strip">
+    <div class="container utility-strip-container">
+      <div class="utility-left-group">
+        <span class="utility-badge-coral">
+          <i data-lucide="alert-circle" class="lucide-sm"></i>
+          <span>تكليف مستحق</span>
+        </span>
+        <span class="utility-text">
+          <strong>اتصالات بيانات:</strong> واجب <code>Exercise 1</code> موعد تسليمه: السبت، 10 أكتوبر 2026.
+        </span>
+      </div>
+      <div class="utility-right-group">
+        <a href="course-datacom.html" class="utility-link">
+          <span>عرض التكليف مباشرة</span>
+          <i data-lucide="arrow-left" class="lucide-sm"></i>
+        </a>
+        <button onclick="dismissAnnouncement()" style="background: none; border: none; color: #fff; cursor: pointer; padding: 0 4px;" title="إغلاق">
+          <i data-lucide="x" class="lucide-sm"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- شريط التنقل العلوي (Top Nav) -->
+  <header class="nav-bar-top">
+    <div class="container nav-container">
+      <a href="index.html" class="nav-brand-lockup">
+        <div class="nav-brand-mark">IUG</div>
+        <div class="nav-brand-text">
+          <span class="nav-brand-subtitle">الجامعة الإسلامية بغزة • كلية الهندسة</span>
+          <h1 class="nav-brand-title">بوابة المواد الدراسية الأكاديمية</h1>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <button id="themeToggleBtn" class="btn btn-outline-ink btn-sm" title="تبديل الوضع">
+          <i data-lucide="moon" class="lucide-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- البانر الترويجي الرئيسي مع أزرار الوصول المباشر (Hero Promo Card) -->
+  <section class="hero-promo-section">
+    <div class="container">
+      <div class="hero-promo-card">
+        <div class="hero-copy-block">
+          <span class="hero-eyebrow">
+            <i data-lucide="graduation-cap" class="lucide-sm"></i>
+            <span>Academic Resource Hub • خريف 2026</span>
+          </span>
+          <h2 class="hero-headline">منصة المقررات والمحاضرات البديلة</h2>
+          <p class="hero-subparagraph">
+            أرشيف شامل لجميع المحاضرات المسجلة، السلايدات، الكتب والمراجع المعتمدة، وروابط مجموعات الواتساب الرسمية لدعم الزملاء ومواصلة التعلم بدون انقطاع.
+          </p>
+          <div class="hero-cta-group">
+            <a href="course-datacom.html" class="btn btn-primary">
+              <i data-lucide="radio" class="lucide-sm"></i>
+              <span>اتصالات بيانات</span>
+              <i data-lucide="arrow-left" class="lucide-sm"></i>
+            </a>
+            <a href="course-os.html" class="btn btn-primary">
+              <i data-lucide="cpu" class="lucide-sm"></i>
+              <span>نظم تشغيل</span>
+              <i data-lucide="arrow-left" class="lucide-sm"></i>
+            </a>
+            <a href="course-assembly.html" class="btn btn-primary">
+              <i data-lucide="binary" class="lucide-sm"></i>
+              <span>لغة أسمبلي</span>
+              <i data-lucide="arrow-left" class="lucide-sm"></i>
+            </a>
+            <button class="btn btn-outline-ink" onclick="document.getElementById('courseSearchInput').focus()">
+              <i data-lucide="search" class="lucide-sm"></i>
+              <span>بحث في المواد</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- عناصر التحكم والفلترة والبحث -->
+  <section class="filter-controls-section">
+    <div class="container">
+      <div class="search-input-wrap">
+        <input 
+          type="text" 
+          id="courseSearchInput" 
+          placeholder="ابحث عن مادة، كود (مثل ECOM4401)، أو شابتر..." 
+          autocomplete="off"
+        >
+        <span class="search-icon-symbol">
+          <i data-lucide="search" class="lucide-sm"></i>
+        </span>
+        <button id="clearSearchBtn" style="position: absolute; left: 38px; background: none; border: none; color: var(--color-graphite); cursor: pointer; display: none;" title="مسح البحث">
+          <i data-lucide="x" class="lucide-sm"></i>
+        </button>
+      </div>
+
+      <nav class="category-tabs-row" aria-label="تصفية المواد">
+        <button class="category-tab active" data-category="all">
+          <i data-lucide="layers" class="lucide-sm"></i>
+          <span>كل المقررات</span>
+        </button>
+        <button class="category-tab" data-category="theory">
+          <i data-lucide="book-open" class="lucide-sm"></i>
+          <span>المواد النظرية</span>
+        </button>
+        <button class="category-tab" data-category="lab">
+          <i data-lucide="flask-conical" class="lucide-sm"></i>
+          <span>المعامل والتطبيقات</span>
+        </button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- شبكة البطاقات (Catalog Section) -->
+  <main class="catalog-section">
+    <div class="container">
+      <div class="catalog-header-row">
+        <h3 class="catalog-title">المقررات الدراسية المعتمدة</h3>
+      </div>
+
+      <div id="coursesGrid" class="courses-grid">
+        <!-- يتم ملء البطاقات تلقائياً بواسطة JavaScript -->
+      </div>
+
+      <div id="noResults" style="display: none; text-align: center; padding: 48px 0;">
+        <i data-lucide="search-x" class="lucide-lg" style="color: var(--color-graphite); margin-bottom: 8px;"></i>
+        <h4 style="font-size: 17px; margin-bottom: 4px;">لم يتم العثور على مقررات مطابقة</h4>
+        <p style="font-size: 13.5px; color: var(--color-graphite); margin-bottom: 16px;">جرب البحث بكلمات أخرى أو اختر تصنيفاً مختلفاً.</p>
+        <button class="btn btn-outline-ink btn-sm" onclick="resetFilters()">عرض كل المقررات</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- عنصر التنبيه Toast -->
+  <div id="toastNotification" class="toast-container" style="display: none;">
+    <i data-lucide="check-circle" class="lucide-sm" style="color: var(--whatsapp-color);"></i>
+    <span id="toastMessage">تم نسخ الرابط بنجاح!</span>
+  </div>
+
+  <!-- التذييل الفاخر (HP Dark Slab Footer) -->
+  <footer class="footer-dark">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <h4>بوابة المقررات الأكاديمية • قسم هندسة الحاسوب والاتصالات</h4>
+        <p>الجامعة الإسلامية بغزة - مبادرة طلابية تعاونية لخدمة جميع الزملاء في الدفعة.</p>
+      </div>
+      <div>
+        <span style="font-size: 12.5px; color: var(--color-steel);">خريف 2026 • كلية الهندسة وتكنولوجيا المعلومات</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- مكتبة Lucide Icons المحلية -->
+  <script src="lucide.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
