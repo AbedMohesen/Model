@@ -20,9 +20,17 @@ ehthumbs_vista.db
 *.sln
 *.sw?
 
+# Environment and Secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+
 # Temporary and log files
 *.log
 *.tmp
 *.bak
 .tempmediaStorage/
 scratch/
+
