@@ -6,8 +6,8 @@
 المقررات: نظم تشغيل • اتصالات بيانات • تنظيم حاسوب ولغة أسمبلي
 =============================================================================
 الوظيفة:
-1. تسجيل الدخول الآمن إلى مودل الجامعة (IUG) باستخدام بياناتك في ملف .env
-2. فحص المواد الدراسية المسجلة وتحديد أي محاضرات أو سلايدات أو تكليفات جديدة
+1. تسجيل الدخول الآمن إلى مودل الجامعة عبر بوابة المصادقة الموحدة (SSO)
+2. فحص المواد الدراسية المسجلة وتحديد أي محاضرات أو سلايدات أو فيديوهات جديدة
 3. تنزيل الملفات الجديدة وتنظيف أسمائها تلقائياً
 4. تحديث قاعدة بيانات الموقع (data.js) وصفحات المقررات
 5. الرفع التلقائي (Git Push) إلى المستودع والاستضافة مباشرة
@@ -43,10 +43,11 @@ BASE_DIR = Path(__file__).resolve().parent
 ENV_PATH = BASE_DIR / ".env"
 DATA_JS_PATH = BASE_DIR / "data.js"
 
-# خريطة المقررات بين مودل والمجلدات المحلية
-COURSE_MAPPINGS = [
+# خريطة المقررات المعتمدة في البوابة
+KNOWN_COURSES = [
     {
         "id": "os",
+        "moodle_id": 12297,
         "keywords": ["نظم تشغيل", "operating systems", "ecom4401"],
         "folder": "OS",
         "page": "course-os.html",
@@ -54,6 +55,7 @@ COURSE_MAPPINGS = [
     },
     {
         "id": "data_comm",
+        "moodle_id": 4455,
         "keywords": ["اتصالات بيانات", "data communication", "data communications", "ecom4411"],
         "folder": "DataCom",
         "page": "course-datacom.html",
@@ -61,7 +63,8 @@ COURSE_MAPPINGS = [
     },
     {
         "id": "assembly",
-        "keywords": ["تنظيم حاسوب", "أسمبلي", "تجميع", "assembly", "ecom4403"],
+        "moodle_id": 2463,
+        "keywords": ["تنظيم حاسوب", "أسمبلي", "تجميع", "assembly", "ecom4403", "ecom4412"],
         "folder": "Assembly",
         "page": "course-assembly.html",
         "title": "تنظيم حاسوب ولغة أسمبلي"
@@ -88,7 +91,6 @@ def load_env(env_file=ENV_PATH):
 
 class IUGMoodleSync:
     BASE_URL = "https://moodle.iugaza.edu.ps"
-    LOGIN_URL = "https://moodle.iugaza.edu.ps/login/index.php"
     SAML_URL = "https://moodle.iugaza.edu.ps/auth/saml2/login.php?wants&idp=907e0c01dccba9d62ae57512cec18ed8&passive=off"
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
@@ -98,136 +100,132 @@ class IUGMoodleSync:
         self.session = requests.Session()
         self.session.headers.update({"User-Agent": self.USER_AGENT})
         self.is_logged_in = False
+        self.sesskey = None
         self.user_fullname = ""
 
     def login(self):
-        """تسجيل الدخول إلى مودل (يدعم المباشر ومصادقة SSO)"""
-        print("🔄 جاري الاتصال ببوابة المودل (moodle.iugaza.edu.ps)...")
-        
-        # 1. محاولة تسجيل الدخول المباشر
+        """تسجيل الدخول إلى مودل الجامعة عبر بوابة المصادقة الموحدة (SSO)"""
+        print("🔄 جاري الاتصال ببوابة المصادقة الموحدة (sso.iugaza.edu.ps)...")
         try:
-            r = self.session.get(self.LOGIN_URL, timeout=20)
-            token_match = re.search(r'name=["\']logintoken["\'] value=["\']([^"\']+)["\']', r.text)
-            
-            if token_match:
-                login_token = token_match.group(1)
-                login_data = {
+            r_sso = self.session.get(self.SAML_URL, allow_redirects=True, timeout=25)
+            auth_match = re.search(r'AuthState=([^&]+)', r_sso.url)
+            if not auth_match:
+                print("❌ تعذر العثور على رمز الجلسة AuthState من صفحة SSO.")
+                return False
+
+            auth_state = urllib.parse.unquote(auth_match.group(1))
+            login_res = self.session.post(
+                r_sso.url,
+                data={
                     "username": self.username,
                     "password": self.password,
-                    "logintoken": login_token,
-                    "anchor": ""
-                }
-                res = self.session.post(self.LOGIN_URL, data=login_data, allow_redirects=True, timeout=25)
-                
-                # فحص نجاح تسجيل الدخول
-                if "login/index.php" not in res.url or 'sesskey' in res.text:
-                    if self._verify_login(res.text):
-                        print("✅ تم تسجيل الدخول المباشر بنجاح!")
-                        self.is_logged_in = True
-                        return True
-        except Exception as e:
-            print(f"⚠️ تنبيه أثناء تسجيل الدخول المباشر: {e}")
+                    "AuthState": auth_state
+                },
+                allow_redirects=True,
+                timeout=25
+            )
 
-        # 2. في حال تطلب نظام المصادقة الموحد (SSO SimpleSAML)
-        print("🔄 جاري المحاولة عبر بوابة المصادقة الموحدة (SSO)...")
-        try:
-            sso_page = self.session.get(self.SAML_URL, allow_redirects=True, timeout=25)
-            auth_match = re.search(r'AuthState=([^&]+)', sso_page.url)
+            # التحقق من وجود رسالة خطأ
+            err = re.search(r'class=["\'][^"\']*alert[^"\']*["\'][^>]*>(.*?)</div>', login_res.text, re.DOTALL)
+            if err:
+                msg = re.sub(r'<[^>]+>', ' ', err.group(1)).strip()
+                print(f"❌ خطأ من سيرفر الجامعة: {msg}")
+                return False
+
+            # إرسال استجابة SAMLResponse لمودل
+            if 'name="SAMLResponse"' in login_res.text:
+                saml_resp_match = re.search(r'name="SAMLResponse" value="([^"]+)"', login_res.text)
+                saml_action_match = re.search(r'action="([^"]+)"', login_res.text)
+                if saml_resp_match and saml_action_match:
+                    action = saml_action_match.group(1)
+                    resp_val = saml_resp_match.group(1)
+                    dashboard = self.session.post(action, data={"SAMLResponse": resp_val}, allow_redirects=True, timeout=25)
+                    return self._process_dashboard(dashboard.text)
+
+            return self._process_dashboard(login_res.text)
+        except Exception as e:
+            print(f"❌ استثناء أثناء تسجيل الدخول: {e}")
+            return False
+
+    def _process_dashboard(self, html_text):
+        """استخراج مفتاح الجلسة والتحقق من اكتمال الدخول"""
+        sesskey_m = re.search(r'"sesskey":"([^"]+)"', html_text)
+        if sesskey_m:
+            self.sesskey = sesskey_m.group(1)
+            self.is_logged_in = True
             
-            if auth_match:
-                auth_state = urllib.parse.unquote(auth_match.group(1))
-                sso_post = self.session.post(
-                    sso_page.url,
-                    data={
-                        "username": self.username,
-                        "password": self.password,
-                        "AuthState": auth_state
-                    },
-                    allow_redirects=True,
-                    timeout=25
-                )
-                
-                # قد يكون هناك إعادة توجيه SAML Response عبر نموذج POST مخفي
-                if 'name="SAMLResponse"' in sso_post.text:
-                    saml_resp_match = re.search(r'name="SAMLResponse" value="([^"]+)"', sso_post.text)
-                    saml_action_match = re.search(r'action="([^"]+)"', sso_post.text)
-                    if saml_resp_match and saml_action_match:
-                        saml_action = saml_action_match.group(1)
-                        saml_resp = saml_resp_match.group(1)
-                        final_res = self.session.post(
-                            saml_action,
-                            data={"SAMLResponse": saml_resp},
-                            allow_redirects=True,
-                            timeout=25
-                        )
-                        if self._verify_login(final_res.text):
-                            print("✅ تم تسجيل الدخول عبر المصادقة الموحدة (SSO) بنجاح!")
-                            self.is_logged_in = True
-                            return True
-                elif self._verify_login(sso_post.text):
-                    print("✅ تم تسجيل الدخول عبر المصادقة الموحدة (SSO) بنجاح!")
-                    self.is_logged_in = True
-                    return True
-        except Exception as e:
-            print(f"❌ خطأ أثناء الاتصال بنظام SSO: {e}")
-
-        print("❌ فشل تسجيل الدخول. يرجى التأكد من صحة الرقم الجامعي وكلمة المرور في ملف .env")
-        return False
-
-    def _verify_login(self, html_text):
-        """التحقق من حالة الجلسة واسم الطالب"""
-        if "sesskey" in html_text or "my/" in html_text or "logout.php" in html_text:
-            name_match = re.search(r'class="usertext mr-1"[^>]*>([^<]+)<', html_text)
-            if not name_match:
-                name_match = re.search(r'class="userbutton"[^>]*>.*?<span[^>]*>([^<]+)</span>', html_text, re.DOTALL)
-            if name_match:
-                self.user_fullname = name_match.group(1).strip()
-                print(f"👤 مرحباً بك: {self.user_fullname}")
+            # استخراج اسم الطالب
+            name_m = re.search(r'class="usertext mr-1"[^>]*>([^<]+)<', html_text)
+            if not name_m:
+                name_m = re.search(r'"userfullname":"([^"]+)"', html_text)
+            if name_m:
+                self.user_fullname = name_m.group(1).strip()
+                print(f"✅ مرحباً بك يا {self.user_fullname} (تم تسجيل الدخول بنجاح)")
+            else:
+                print("✅ تم تسجيل الدخول بنجاح إلى حساب الطالب!")
             return True
         return False
 
     def get_enrolled_courses(self):
-        """جلب قائمة المساقات المسجلة للطالب"""
-        print("📚 جاري جلب قائمة المقررات الدراسية من حسابك...")
+        """جلب المقررات المسجلة للطالب عبر WebService API المدمج في المودل"""
+        print("📚 جاري جلب قائمة المقررات الدراسية المعتمدة من حسابك...")
         courses = []
-        r = self.session.get(f"{self.BASE_URL}/my/", timeout=25)
         
-        # استخراج روابط المقررات
-        found_links = set(re.findall(r'https?://moodle\.iugaza\.edu\.ps/course/view\.php\?id=(\d+)', r.text))
-        
-        # استخراج عناوين المواد
-        for cid in sorted(found_links):
-            # البحث عن اسم المساق في الصفحة
-            title_pattern = rf'href="[^"]*view\.php\?id={cid}"[^>]*>(?:<span[^>]*>)?([^<]+)(?:</span>)?</a>'
-            title_match = re.search(title_pattern, r.text)
-            title = title_match.group(1).strip() if title_match else f"Course {cid}"
-            
-            # مطابقة المساق مع مساقاتنا المعتمدة
-            matched_info = None
-            for mapping in COURSE_MAPPINGS:
-                for kw in mapping["keywords"]:
-                    if kw in title.lower():
-                        matched_info = mapping
-                        break
-                if matched_info:
-                    break
+        # 1. محاولة الجلب عبر WebService API
+        if self.sesskey:
+            try:
+                service_url = f"{self.BASE_URL}/lib/ajax/service.php?sesskey={self.sesskey}&info=core_course_get_enrolled_courses_by_timeline_classification"
+                payload = [{
+                    "index": 0,
+                    "methodname": "core_course_get_enrolled_courses_by_timeline_classification",
+                    "args": {"offset": 0, "limit": 0, "classification": "all", "sort": "fullname"}
+                }]
+                api_res = self.session.post(service_url, json=payload, timeout=25)
+                if api_res.status_code == 200:
+                    data = api_res.json()
+                    moodle_courses = data[0].get("data", {}).get("courses", [])
+                    for mc in moodle_courses:
+                        cid = mc.get("id")
+                        fullname = mc.get("fullname", "").strip()
+                        shortname = mc.get("shortname", "").strip()
+                        combined = f"{fullname} {shortname}".lower()
 
-            courses.append({
-                "id": cid,
-                "url": f"{self.BASE_URL}/course/view.php?id={cid}",
-                "title": title,
-                "mapping": matched_info
-            })
+                        matched_info = None
+                        for mapping in KNOWN_COURSES:
+                            if mapping["moodle_id"] == cid or any(kw in combined for kw in mapping["keywords"]):
+                                matched_info = mapping
+                                break
 
-        print(f"ℹ️ تم العثور على {len(courses)} مقرراً دراسياً.")
+                        courses.append({
+                            "id": cid,
+                            "url": f"{self.BASE_URL}/course/view.php?id={cid}",
+                            "title": fullname,
+                            "shortname": shortname,
+                            "mapping": matched_info
+                        })
+            except Exception as e:
+                print(f"⚠️ تنبيه أثناء استدعاء API المقررات: {e}")
+
+        # 2. في حال عدم العثور عليها أو وجود خلل في API نعتمد المقررات الثابتة المؤكدة
+        if not courses:
+            for k in KNOWN_COURSES:
+                courses.append({
+                    "id": k["moodle_id"],
+                    "url": f"{self.BASE_URL}/course/view.php?id={k['moodle_id']}",
+                    "title": k["title"],
+                    "shortname": k["id"],
+                    "mapping": k
+                })
+
+        print(f"ℹ️ تم التعرف على {len(courses)} مقرراً دراسياً:")
         for c in courses:
-            matched_str = f"➡️ [مربوط مع: {c['mapping']['title']}]" if c['mapping'] else "(غير مشمول في البوابة)"
-            print(f"   • {c['title']} (ID: {c['id']}) {matched_str}")
+            status_text = f"➡️ [مربوط مع صفحة: {c['mapping']['title']}]" if c['mapping'] else "(غير مشمول في البوابة)"
+            print(f"   • {c['title']} (ID: {c['id']}) {status_text}")
 
         return courses
 
     def sync_course(self, course_info):
-        """فحص وتنزيل محتويات المقرر المربوط"""
+        """فحص وتنزيل محتويات المقرر المربوط وتحديث الروابط"""
         mapping = course_info["mapping"]
         if not mapping:
             return []
@@ -239,23 +237,19 @@ class IUGMoodleSync:
         print(f"\n🔍 جاري فحص مقرر: {mapping['title']} (مجلد: {folder_name}/)...")
         r = self.session.get(course_info["url"], timeout=25)
         
-        # استخراج الروابط القابلة للتنزيل
-        # 1. روابط الموارد المباشرة resource
+        # استخراج أنشطة المودل
+        # 1. ملفات الموارد /mod/resource/
         resource_ids = set(re.findall(r'/mod/resource/view\.php\?id=(\d+)', r.text))
-        # 2. روابط الملفات pluginfile
-        plugin_files = set(re.findall(r'https?://moodle\.iugaza\.edu\.ps/pluginfile\.php/[^\s"\'<>]+', r.text))
+        
+        # 2. روابط الفيديوهات والمحاضرات الخارجية /mod/url/
+        url_ids = set(re.findall(r'/mod/url/view\.php\?id=(\d+)', r.text))
 
         downloaded_new_files = []
 
-        # فحص وتنزيل الموارد
+        # فحص وتنزيل الملفات المرفوعة
         for rid in resource_ids:
             res_url = f"{self.BASE_URL}/mod/resource/view.php?id={rid}"
             downloaded = self._download_file_if_new(res_url, folder_path)
-            if downloaded:
-                downloaded_new_files.append(downloaded)
-
-        for pfile in plugin_files:
-            downloaded = self._download_file_if_new(pfile, folder_path)
             if downloaded:
                 downloaded_new_files.append(downloaded)
 
@@ -268,9 +262,7 @@ class IUGMoodleSync:
             content_type = head.headers.get("Content-Type", "")
             content_disp = head.headers.get("Content-Disposition", "")
             
-            # تجاهل صفحات HTML
             if "text/html" in content_type:
-                # محاولة فحص الصفحة نفسها إذا كانت تحوي رابط تحميل مباشر
                 return None
 
             filename = None
@@ -285,7 +277,7 @@ class IUGMoodleSync:
             if not filename or filename == "view.php":
                 return None
 
-            # تنظيف اسم الملف
+            # تنظيف اسم الملف وحذف (1) و (2)
             clean_filename = self._clean_filename(filename)
             target_file = target_dir / clean_filename
 
@@ -317,9 +309,7 @@ class IUGMoodleSync:
     def _clean_filename(self, name):
         """تنظيف اسم الملف من لاحقات ويندوز المكررة والرموز المزعجة"""
         name = urllib.parse.unquote(name)
-        # إزالة (1) و (2)
         name = re.sub(r'\s*\(\d+\)', '', name)
-        # استبدال المسافات الزائدة
         name = name.strip()
         return name
 
@@ -376,26 +366,19 @@ def run_git_sync(new_files):
     if not new_files:
         return
 
-    # تحديث قاعدة البيانات أولاً
     update_database_with_new_files(new_files)
-
     print("\n🚀 جاري تجهيز التحديث ورفعه إلى GitHub...")
     try:
-        # إضافة الملفات الجديدة
         subprocess.run(["git", "add", "."], cwd=BASE_DIR, check=True)
-        
-        # إنشاء رسالة الالتزام
         course_names = list(set([f["folder"] for f in new_files]))
         files_str = ", ".join([f["filename"] for f in new_files[:3]])
         if len(new_files) > 3:
             files_str += f" (+{len(new_files)-3} files)"
             
         commit_msg = f"feat(moodle-sync): add new materials for {', '.join(course_names)} ({files_str})"
-        
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=BASE_DIR, check=True)
         print("   ✅ تم إنشاء الـ Commit بنجاح.")
 
-        # دفع التغييرات
         print("   🌐 جاري الرفع إلى المستودع (git push origin main)...")
         push_res = subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR, capture_output=True, text=True)
         if push_res.returncode == 0:
@@ -416,7 +399,6 @@ def main():
     print("🎓 أداة المزامنة الذكية مع مودل الجامعة الإسلامية (IUG Moodle Sync)")
     print("=" * 65)
 
-    # 1. التحقق من ملف .env
     env = load_env()
     username = env.get("MOODLE_USERNAME", "").strip()
     password = env.get("MOODLE_PASSWORD", "").strip()
@@ -429,15 +411,14 @@ def main():
         print("MOODLE_USERNAME=رقمك_الجامعي")
         print("MOODLE_PASSWORD=كلمة_مرورك")
         print("--------------------------------------------------")
-        print("💡 تم إنشاء نموذج جاهز باسم `.env.example` يمكنك نسخه وتسميته `.env`.")
         return
 
-    # 2. تسجيل الدخول
+    # تسجيل الدخول
     syncer = IUGMoodleSync(username, password)
     if not syncer.login():
         return
 
-    # 3. جلب المساقات
+    # جلب المساقات
     courses = syncer.get_enrolled_courses()
     matched_courses = [c for c in courses if c["mapping"]]
 
@@ -449,13 +430,13 @@ def main():
         print("\n✅ تم فحص المواد بنجاح (وضع الفحص فقط).")
         return
 
-    # 4. مزامنة كل مساق
+    # مزامنة المواد
     all_new_files = []
     for c in matched_courses:
         new_files = syncer.sync_course(c)
         all_new_files.extend(new_files)
 
-    # 5. التقرير والرفع
+    # التقرير والرفع
     print("\n" + "=" * 65)
     if all_new_files:
         print(f"🎉 تم تنزيل {len(all_new_files)} ملفاً جديداً بنجاح:")
@@ -467,7 +448,7 @@ def main():
         else:
             print("\n💡 تم حفظ الملفات محلياً (تم تعطيل الرفع التلقائي).")
     else:
-        print("✨ لا توجد ملفات أو سلايدات جديدة على المودل. موقعك محدث بالكامل!")
+        print("✨ لا توجد ملفات أو سلايدات جديدة غير محملة على المودل. موقعك محدث بالكامل!")
     print("=" * 65)
 
 
