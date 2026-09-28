@@ -87,11 +87,95 @@ var COURSES_DATA = [
         ]
       },
       {
-        title: "Lectures (المحاضرات والشروحات)",
-        icon: "film",
+        title: "Chapter 1: Introduction",
+        icon: "folder",
         items: [
           { title: "Chapter 1: Introduction - سلايدات الفصل الأول", type: "ppt", path: "OS/ch1.pptx" },
           { title: "Chapter 1: Introduction, Lecture 1 part 1 - تسجيل المحاضرة الأولى", type: "video", path: "https://www.youtube.com/watch?v=UKrWWFVM6uM" }
+        ]
+      },
+      {
+        title: "Chapter 2: Operating-System Services & Structures",
+        icon: "folder",
+        items: [
+          { title: "Chapter 2: Operating-System Services - سلايدات الفصل الثاني", type: "ppt", path: "OS/ch2.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 3: Processes",
+        icon: "folder",
+        items: [
+          { title: "Chapter 3: Processes - سلايدات الفصل الثالث", type: "ppt", path: "OS/ch3.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 4: Threads & Concurrency",
+        icon: "folder",
+        items: [
+          { title: "Chapter 4: Threads & Concurrency - سلايدات الفصل الرابع", type: "ppt", path: "OS/ch4.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 5: CPU Scheduling",
+        icon: "folder",
+        items: [
+          { title: "Chapter 5: CPU Scheduling - سلايدات الفصل الخامس", type: "ppt", path: "OS/ch5.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 6: Synchronization Tools",
+        icon: "folder",
+        items: [
+          { title: "Chapter 6: Synchronization Tools - سلايدات الفصل السادس", type: "ppt", path: "OS/ch6.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 7: Synchronization Examples",
+        icon: "folder",
+        items: [
+          { title: "Chapter 7: Synchronization Examples - سلايدات الفصل السابع", type: "ppt", path: "OS/ch7.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 8: Deadlocks",
+        icon: "folder",
+        items: [
+          { title: "Chapter 8: Deadlocks - سلايدات الفصل الثامن", type: "ppt", path: "OS/ch8.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 9: Main Memory",
+        icon: "folder",
+        items: [
+          { title: "Chapter 9: Main Memory - سلايدات الفصل التاسع", type: "ppt", path: "OS/ch9.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 10: Virtual Memory",
+        icon: "folder",
+        items: [
+          { title: "Chapter 10: Virtual Memory - سلايدات الفصل العاشر", type: "ppt", path: "OS/ch10.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 13: File-System Interface",
+        icon: "folder",
+        items: [
+          { title: "Chapter 13: File-System Interface - سلايدات الفصل الثالث عشر", type: "ppt", path: "OS/ch13.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 16: Security",
+        icon: "folder",
+        items: [
+          { title: "Chapter 16: Security - سلايدات الفصل السادس عشر", type: "ppt", path: "OS/ch16.pptx" }
+        ]
+      },
+      {
+        title: "Chapter 18: Virtual Machines",
+        icon: "folder",
+        items: [
+          { title: "Chapter 18: Virtual Machines - سلايدات الفصل الثامن عشر", type: "ppt", path: "OS/ch18.pptx" }
         ]
       }
     ]

@@ -36,7 +36,7 @@
 | المقرر الدراسي | كود المساق | الصفحة المخصصة | الموارد المرفقة |
 | :--- | :--- | :--- | :--- |
 | **اتصالات بيانات (Data Communications)** | `ECOM4411-6249` | [`course-datacom.html`](course-datacom.html) | الخطة، 5 فيديوهات يوتيوب، سلايدات Ch1 & Ch2، وتكليف Exercise 1 مع مخطط OSI |
-| **نظم تشغيل (Operating Systems)** | `ECOM4401-6276` | [`course-os.html`](course-os.html) | الخطة، كتاب Silberschatz كامل، سلايدات Ch1، ومحاضرتان مسجلتان |
+| **نظم تشغيل (Operating Systems)** | `ECOM4401-6276` | [`course-os.html`](course-os.html) | الخطة، كتاب Silberschatz كامل، سلايدات 13 فصلاً معتمداً (Ch1-Ch10, Ch13, Ch16, Ch18)، ومحاضرة مسجلة |
 | **تنظيم حاسوب ولغة أسمبلي (Computer Org & Assembly)** | `ECOM4403-2463` | [`course-assembly.html`](course-assembly.html) | الخطة، كتاب Kip Irvine، فيديوهات Ch1 & Ch3، ومحاكاة دورة المعالج Fetch-Decode |
 
 ### ثانياً: المعامل والتطبيقات العملية (Laboratories)
