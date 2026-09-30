@@ -35,7 +35,7 @@ if sys.platform.startswith("win"):
 try:
     import requests
 except ImportError:
-    print("❌ تنبيه: مكتبة requests غير مثبتة. قم بتثبيتها عبر: pip install requests")
+    print("[ERROR] 'requests' library not installed. Install via: pip install requests")
     sys.exit(1)
 
 # إعداد المسارات الأساسية
@@ -105,12 +105,12 @@ class IUGMoodleSync:
 
     def login(self):
         """تسجيل الدخول إلى مودل الجامعة عبر بوابة المصادقة الموحدة (SSO)"""
-        print("🔄 جاري الاتصال ببوابة المصادقة الموحدة (sso.iugaza.edu.ps)...")
+        print("[SSO] Connecting to authentication portal (sso.iugaza.edu.ps)...")
         try:
             r_sso = self.session.get(self.SAML_URL, allow_redirects=True, timeout=25)
             auth_match = re.search(r'AuthState=([^&]+)', r_sso.url)
             if not auth_match:
-                print("❌ تعذر العثور على رمز الجلسة AuthState من صفحة SSO.")
+                print("[ERROR] Could not extract AuthState session token from SSO.")
                 return False
 
             auth_state = urllib.parse.unquote(auth_match.group(1))
@@ -129,7 +129,7 @@ class IUGMoodleSync:
             err = re.search(r'class=["\'][^"\']*alert[^"\']*["\'][^>]*>(.*?)</div>', login_res.text, re.DOTALL)
             if err:
                 msg = re.sub(r'<[^>]+>', ' ', err.group(1)).strip()
-                print(f"❌ خطأ من سيرفر الجامعة: {msg}")
+                print(f"[ERROR] University server returned error: {msg}")
                 return False
 
             # إرسال استجابة SAMLResponse لمودل
@@ -144,7 +144,7 @@ class IUGMoodleSync:
 
             return self._process_dashboard(login_res.text)
         except Exception as e:
-            print(f"❌ استثناء أثناء تسجيل الدخول: {e}")
+            print(f"[ERROR] Exception during login: {e}")
             return False
 
     def _process_dashboard(self, html_text):
@@ -160,15 +160,15 @@ class IUGMoodleSync:
                 name_m = re.search(r'"userfullname":"([^"]+)"', html_text)
             if name_m:
                 self.user_fullname = name_m.group(1).strip()
-                print(f"✅ مرحباً بك يا {self.user_fullname} (تم تسجيل الدخول بنجاح)")
+                print(f"[OK] Welcome, {self.user_fullname}! (Logged in successfully)")
             else:
-                print("✅ تم تسجيل الدخول بنجاح إلى حساب الطالب!")
+                print("[OK] Logged in successfully to student portal!")
             return True
         return False
 
     def get_enrolled_courses(self):
         """جلب المقررات المسجلة للطالب عبر WebService API المدمج في المودل"""
-        print("📚 جاري جلب قائمة المقررات الدراسية المعتمدة من حسابك...")
+        print("[COURSES] Fetching enrolled courses from student account...")
         courses = []
         
         # 1. محاولة الجلب عبر WebService API
@@ -204,7 +204,7 @@ class IUGMoodleSync:
                             "mapping": matched_info
                         })
             except Exception as e:
-                print(f"⚠️ تنبيه أثناء استدعاء API المقررات: {e}")
+                print(f"[WARN] Error calling courses API: {e}")
 
         # 2. في حال عدم العثور عليها أو وجود خلل في API نعتمد المقررات الثابتة المؤكدة
         if not courses:
@@ -217,10 +217,11 @@ class IUGMoodleSync:
                     "mapping": k
                 })
 
-        print(f"ℹ️ تم التعرف على {len(courses)} مقرراً دراسياً:")
+        print(f"[INFO] Found {len(courses)} enrolled course(s):")
         for c in courses:
-            status_text = f"➡️ [مربوط مع صفحة: {c['mapping']['title']}]" if c['mapping'] else "(غير مشمول في البوابة)"
-            print(f"   • {c['title']} (ID: {c['id']}) {status_text}")
+            status_text = f"-> [Linked to: {c['mapping']['folder']}/ ({c['mapping']['page']})]" if c['mapping'] else "(Not in portal)"
+            display_title = c.get("shortname") or c.get("title") or f"Course {c['id']}"
+            print(f"   * [{c['id']}] {display_title} {status_text}")
 
         return courses
 
@@ -234,7 +235,7 @@ class IUGMoodleSync:
         folder_path = BASE_DIR / folder_name
         folder_path.mkdir(exist_ok=True)
 
-        print(f"\n🔍 جاري فحص مقرر: {mapping['title']} (مجلد: {folder_name}/)...")
+        print(f"\n[SCAN] Checking course: {mapping['id'].upper()} ({mapping['folder']}/)...")
         r = self.session.get(course_info["url"], timeout=25)
         
         # استخراج أنشطة المودل
@@ -288,7 +289,7 @@ class IUGMoodleSync:
                     return None
 
             # تنزيل الملف
-            print(f"   📥 تنزيل ملف جديد: {clean_filename} ...")
+            print(f"   [DOWNLOAD] Fetching new file: {clean_filename} ...")
             resp = self.session.get(url, stream=True, timeout=40)
             with open(target_file, "wb") as f:
                 for chunk in resp.iter_content(chunk_size=65536):
@@ -296,7 +297,7 @@ class IUGMoodleSync:
                         f.write(chunk)
 
             size_mb = round(target_file.stat().st_size / (1024 * 1024), 2)
-            print(f"   ✅ تم حفظ: {clean_filename} ({size_mb} MB)")
+            print(f"   [SAVED] {clean_filename} ({size_mb} MB)")
             return {
                 "filename": clean_filename,
                 "relative_path": f"{target_dir.name}/{clean_filename}",
@@ -431,7 +432,7 @@ def update_course_pages_with_new_files(new_files):
                         html_text = html_text[:match.start()] + updated_sec + html_text[match.end():]
                         section_found = True
                         modified = True
-                        print(f"   📄 تم إضافة {filename} إلى قسم Chapter {ch_num} في صفحة ({page_name}).")
+                        print(f"   [HTML] Added {filename} to Chapter {ch_num} in ({page_name}).")
 
                 # إذا لم يكن قسم الشابتر موجوداً، ننشئ قسماً جديداً له
                 if not section_found:
@@ -459,14 +460,14 @@ def update_course_pages_with_new_files(new_files):
                         pos = close_wrap_match.start(1)
                         html_text = html_text[:pos] + new_section_card + html_text[pos:]
                         modified = True
-                        print(f"   📄 تم إنشاء قسم جديد للملف {filename} في صفحة ({page_name}).")
+                        print(f"   [HTML] Created new section for {filename} in ({page_name}).")
 
             if modified:
                 with open(html_path, "w", encoding="utf-8") as f:
                     f.write(html_text)
-                print(f"   ✅ تم تحديث صفحة المقرر ({page_name}) بنجاح.")
+                print(f"   [OK] Course page ({page_name}) updated successfully.")
         except Exception as e:
-            print(f"   ⚠️ تعذر تحديث صفحة {page_name} تلقائياً: {e}")
+            print(f"   [WARN] Could not update page ({page_name}) automatically: {e}")
 
 
 def update_database_with_new_files(new_files):
@@ -547,9 +548,9 @@ def update_database_with_new_files(new_files):
         if added_count > 0:
             with open(DATA_JS_PATH, "w", encoding="utf-8") as f:
                 f.write(data_text)
-            print(f"   📝 تم تسجيل {added_count} ملفاً جديداً في data.js تلقائياً وبشكل منظم.")
+            print(f"   [DATA.JS] Registered {added_count} new file(s) in data.js successfully.")
     except Exception as e:
-        print(f"   ⚠️ تعذر تحديث data.js تلقائياً: {e}")
+        print(f"   [WARN] Could not update data.js automatically: {e}")
 
 
 def run_git_sync(new_files):
@@ -557,7 +558,7 @@ def run_git_sync(new_files):
     if not new_files:
         return
 
-    print("\n🚀 جاري تجهيز التحديث ورفعه إلى GitHub...")
+    print("\n[GIT] Preparing updates and pushing to GitHub...")
     try:
         subprocess.run(["git", "add", "."], cwd=BASE_DIR, check=True)
         course_names = list(set([f["folder"] for f in new_files]))
@@ -567,26 +568,26 @@ def run_git_sync(new_files):
             
         commit_msg = f"feat(moodle-sync): add new materials for {', '.join(course_names)} ({files_str})"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=BASE_DIR, check=True)
-        print("   ✅ تم إنشاء الـ Commit بنجاح.")
+        print("   [OK] Git commit created successfully.")
 
-        print("   🌐 جاري الرفع إلى المستودع (git push origin main)...")
+        print("   [GIT] Pushing to remote repository (git push origin main)...")
         push_res = subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR, capture_output=True, text=True)
         if push_res.returncode == 0:
-            print("   🎉 تم رفع التحديثات إلى الاستضافة بنجاح وبشكل فوري!")
+            print("   [SUCCESS] Updates pushed to GitHub successfully!")
         else:
-            print(f"   ⚠️ تعذر الرفع: {push_res.stderr}")
+            print(f"   [WARN] Push failed: {push_res.stderr}")
     except Exception as e:
-        print(f"   ❌ حدث خطأ أثناء تشغيل Git: {e}")
+        print(f"   [ERROR] Git execution error: {e}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="أداة المزامنة التلقائية مع مودل الجامعة الإسلامية (IUG)")
-    parser.add_argument("--no-push", action="store_true", help="تنزيل الملفات وتحديث الموقع محلياً فقط دون الرفع لـ GitHub")
-    parser.add_argument("--check-only", action="store_true", help="فحص المواد فقط دون تنزيل")
+    parser = argparse.ArgumentParser(description="IUG Moodle Automated Synchronization Tool")
+    parser.add_argument("--no-push", action="store_true", help="Download and update locally without pushing to GitHub")
+    parser.add_argument("--check-only", action="store_true", help="Check courses only without downloading")
     args = parser.parse_args()
 
     print("=" * 65)
-    print("🎓 أداة المزامنة الذكية مع مودل الجامعة الإسلامية (IUG Moodle Sync)")
+    print("  IUG Moodle Smart Synchronization Tool")
     print("=" * 65)
 
     env = load_env()
@@ -595,54 +596,54 @@ def main():
     auto_push = env.get("AUTO_GIT_PUSH", "true").lower() == "true" and not args.no_push
 
     if not username or not password:
-        print("\n⚠️ تنبيه: بيانات الدخول غير موجودة في ملف .env!")
-        print("يرجى فتح ملف .env وكتابة رقمك الجامعي وكلمة المرور بالشكل التالي:")
+        print("\n[WARN] Login credentials not found in .env file!")
+        print("Please open .env and set your university ID and password:")
         print("--------------------------------------------------")
-        print("MOODLE_USERNAME=رقمك_الجامعي")
-        print("MOODLE_PASSWORD=كلمة_مرورك")
+        print("MOODLE_USERNAME=your_student_id")
+        print("MOODLE_PASSWORD=your_password")
         print("--------------------------------------------------")
         return
 
-    # تسجيل الدخول
+    # Login
     syncer = IUGMoodleSync(username, password)
     if not syncer.login():
         return
 
-    # جلب المساقات
+    # Fetch enrolled courses
     courses = syncer.get_enrolled_courses()
     matched_courses = [c for c in courses if c["mapping"]]
 
     if not matched_courses:
-        print("ℹ️ لم يتم العثور على مقررات مطابقة لمقررات البوابة (نظم تشغيل، اتصالات، أسمبلي).")
+        print("[INFO] No matching courses found for portal (OS, DataCom, Assembly).")
         return
 
     if args.check_only:
-        print("\n✅ تم فحص المواد بنجاح (وضع الفحص فقط).")
+        print("\n[OK] Courses checked successfully (check-only mode).")
         return
 
-    # مزامنة المواد
+    # Sync courses
     all_new_files = []
     for c in matched_courses:
         new_files = syncer.sync_course(c)
         all_new_files.extend(new_files)
 
-    # التقرير والتحديث والرفع
+    # Report, update, and push
     print("\n" + "=" * 65)
     if all_new_files:
-        print(f"🎉 تم تنزيل {len(all_new_files)} ملفاً جديداً بنجاح:")
+        print(f"[OK] Downloaded {len(all_new_files)} new file(s) successfully:")
         for nf in all_new_files:
-            print(f"   • [{nf['folder']}] {nf['filename']} ({nf['size_mb']} MB)")
+            print(f"   * [{nf['folder']}] {nf['filename']} ({nf['size_mb']} MB)")
 
-        # تحديث قاعدة البيانات وصفحات المقررات محلياً دائماً
+        # Always update local database and course pages
         update_database_with_new_files(all_new_files)
         update_course_pages_with_new_files(all_new_files)
 
         if auto_push:
             run_git_sync(all_new_files)
         else:
-            print("\n💡 تم حفظ الملفات وتحديث الموقع محلياً (الرفع التلقائي معطل).")
+            print("\n[INFO] Files saved and website updated locally (auto-push disabled).")
     else:
-        print("✨ لا توجد ملفات أو سلايدات جديدة غير محملة على المودل. موقعك محدث بالكامل!")
+        print("[OK] All courses are up to date. No new materials found on Moodle!")
     print("=" * 65)
 
 

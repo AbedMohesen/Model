@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 echo ========================================================
-echo جاري تشغيل المزامنة التلقائية مع مودل الجامعة الإسلامية...
+echo Starting IUG Moodle Automated Synchronization...
 echo ========================================================
 python moodle_sync.py
 echo.
