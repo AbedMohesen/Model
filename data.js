@@ -25,20 +25,6 @@ var COURSES_DATA = [
     ],
     sections: [
       {
-        title: "ch03-FF",
-        icon: "folder",
-        items: [
-          { title: "ch03-FF", type: "ppt", path: "DataCom/ch03-FF.ppt" }
-        ]
-      },
-      {
-        title: "ch3",
-        icon: "folder",
-        items: [
-          { title: "ch3", type: "pdf", path: "DataCom/ch3.pdf" }
-        ]
-      },
-      {
         title: "Course Description, Fall 2026",
         icon: "clipboard-list",
         items: [
@@ -71,6 +57,14 @@ var COURSES_DATA = [
           { title: "lec2A - محاضرة الفصل الثاني (الجزء A)", type: "video", path: "https://www.youtube.com/watch?v=ovY1K3wWYSE" },
           { title: "lec2B - محاضرة الفصل الثاني (الجزء B)", type: "video", path: "https://www.youtube.com/watch?v=XaL4mxbsBiw" },
           { title: "Chapter 2 - سلايدات الفصل الثاني", type: "ppt", path: "DataCom/ch02-F.ppt" }
+        ]
+      },
+      {
+        title: "Chapter 3: Data and Signals",
+        icon: "folder",
+        items: [
+          { title: "Ch 3 - ملف الفصل الثالث PDF", type: "pdf", path: "DataCom/ch3.pdf" },
+          { title: "Chapter 3 - سلايدات الفصل الثالث", type: "ppt", path: "DataCom/ch03-FF.ppt" }
         ]
       }
     ]
