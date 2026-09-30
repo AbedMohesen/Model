@@ -25,6 +25,20 @@ var COURSES_DATA = [
     ],
     sections: [
       {
+        title: "ch03-FF",
+        icon: "folder",
+        items: [
+          { title: "ch03-FF", type: "ppt", path: "DataCom/ch03-FF.ppt" }
+        ]
+      },
+      {
+        title: "ch3",
+        icon: "folder",
+        items: [
+          { title: "ch3", type: "pdf", path: "DataCom/ch3.pdf" }
+        ]
+      },
+      {
         title: "Course Description, Fall 2026",
         icon: "clipboard-list",
         items: [
