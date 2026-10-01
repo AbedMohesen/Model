@@ -65,7 +65,15 @@ var COURSES_DATA = [
         items: [
           { title: "Ch 3 - ملف الفصل الثالث PDF", type: "pdf", path: "DataCom/ch3.pdf" },
           { title: "Chapter 3 - سلايدات الفصل الثالث", type: "ppt", path: "DataCom/ch03-FF.ppt" }
-        ]
+        ,
+          { title: "Phys L 1 - مقدمة الطبقة المادية", type: "video", path: "https://www.youtube.com/watch?v=Km_nj8mdCzU" },
+          { title: "dig tr 1 - الإرسال الرقمي 1", type: "video", path: "https://www.youtube.com/watch?v=L-LyRAk5N2U" },
+          { title: "Dig tr 2 - الإرسال الرقمي 2", type: "video", path: "https://www.youtube.com/watch?v=CRSffscnB0Y" },
+          { title: "Dig tr 3 - الإرسال الرقمي 3", type: "video", path: "https://www.youtube.com/watch?v=wf0edqUsgig" },
+          { title: "Dig tr 4 - الإرسال الرقمي 4", type: "video", path: "https://www.youtube.com/watch?v=6a7Xtjo5HtI" },
+          { title: "decibel - حسابات الديسيبل", type: "video", path: "https://www.youtube.com/watch?v=x-3o0LLvg9g" },
+          { title: "Shannon - سعة القناة ونظرية شانون", type: "video", path: "https://www.youtube.com/watch?v=kTyKGZAWsOs" },
+          { title: "ch3_Performance - مقاييس أداء الشبكة", type: "video", path: "https://www.youtube.com/watch?v=b8z5uY7QSGg" }]
       }
     ]
   },
@@ -228,7 +236,9 @@ var COURSES_DATA = [
         icon: "film",
         items: [
           { title: "FetchDecodeExcute Cycle - فيديو دورة الجلب والتنفيذ", type: "video", path: "Assembly/FetchDecodeExcute.mp4" }
-        ]
+        ,
+          { title: "Chapter 2: Lecture 1 - معمارية المعالج", type: "video", path: "https://youtu.be/-NJxlwUl8lM" },
+          { title: "Chapter 2: Lecture 2 - معمارية المعالج", type: "video", path: "https://youtu.be/bpNRf2F7gvI" }]
       },
       {
         title: "Chapter 3: Assembly Language Fundamentals",

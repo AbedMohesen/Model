@@ -33,4 +33,6 @@ ehthumbs_vista.db
 *.bak
 .tempmediaStorage/
 scratch/
+__pycache__/
+*.pyc
 

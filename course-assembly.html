@@ -331,7 +331,53 @@
                   <i data-lucide="copy" class="lucide-sm"></i>
                 </button>
               </div>
+            
+            <!-- Chapter2_lecture#1 -->
+            <div class="moodle-file-row">
+              <div class="file-row-left">
+                <div class="file-type-square" style="color: #ff0000;">
+                  <i data-lucide="play-circle"></i>
+                </div>
+                <div class="file-meta-text">
+                  <div class="file-name-heading">Chapter 2: Lecture 1 (المحاضرة الأولى - معمارية المعالج)</div>
+                  <span class="file-subinfo">تسجيل فيديو YouTube • شرح معمارية الحاسوب ووحدة المعالجة المركزية x86</span>
+                </div>
+              </div>
+              <div class="file-row-actions">
+                <button class="btn btn-primary btn-sm" onclick="playYouTube('-NJxlwUl8lM', 'Chapter 2: Lecture 1 - معمارية المعالج')">
+                  <i data-lucide="play" class="lucide-sm"></i>
+                  <span>تشغيل المحاضرة</span>
+                </button>
+                <a href="https://youtu.be/-NJxlwUl8lM" target="_blank" rel="noopener noreferrer" class="btn btn-outline-ink btn-sm">
+                  <i data-lucide="external-link" class="lucide-sm"></i>
+                  <span>YouTube</span>
+                </a>
+              </div>
             </div>
+
+            <!-- Chapter2_lecture#2 -->
+            <div class="moodle-file-row">
+              <div class="file-row-left">
+                <div class="file-type-square" style="color: #ff0000;">
+                  <i data-lucide="play-circle"></i>
+                </div>
+                <div class="file-meta-text">
+                  <div class="file-name-heading">Chapter 2: Lecture 2 (المحاضرة الثانية - معمارية المعالج)</div>
+                  <span class="file-subinfo">تسجيل فيديو YouTube • تكملة شرح بنية المعالج والسجلات وإدارة الذاكرة</span>
+                </div>
+              </div>
+              <div class="file-row-actions">
+                <button class="btn btn-primary btn-sm" onclick="playYouTube('bpNRf2F7gvI', 'Chapter 2: Lecture 2 - معمارية المعالج')">
+                  <i data-lucide="play" class="lucide-sm"></i>
+                  <span>تشغيل المحاضرة</span>
+                </button>
+                <a href="https://youtu.be/bpNRf2F7gvI" target="_blank" rel="noopener noreferrer" class="btn btn-outline-ink btn-sm">
+                  <i data-lucide="external-link" class="lucide-sm"></i>
+                  <span>YouTube</span>
+                </a>
+              </div>
+            </div>
+</div>
 
           </div>
         </div>
@@ -503,6 +549,7 @@
       modal.style.display = 'flex';
       if (window.lucide) lucide.createIcons();
     }
+    window.playVideo = playYouTube;
 
     function playLocalVideo(videoPath, title) {
       const modal = document.getElementById('videoModal');
