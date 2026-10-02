@@ -187,21 +187,28 @@ function createCourseCardHTML(course) {
     `;
   }
 
-  // زر الإجراء الرئيسي: إما الانتقال لصفحة المادة أو الانضمام المباشر لجروب المعمل
+  // زر الإجراء الرئيسي: إما الانتقال لصفحة المادة أو تصفح تجارب وملفات المعمل
   let actionBtnHTML = '';
+  const isLab = course.category === 'lab';
   if (course.pageUrl) {
+    const btnText = isLab ? 'دخول صفحة المعمل والتجارب' : 'دخول صفحة المقرر';
+    const btnIcon = isLab ? 'flask-conical' : 'arrow-left';
     actionBtnHTML = `
       <a href="${course.pageUrl}" class="btn btn-primary" style="width: 100%;">
-        <span>دخول صفحة المقرر</span>
-        <i data-lucide="arrow-left" class="lucide-sm"></i>
+        <i data-lucide="${btnIcon}" class="lucide-sm"></i>
+        <span>${btnText}</span>
       </a>
     `;
-  } else if (course.category === 'lab' && course.socialLinks && course.socialLinks.length > 0) {
+  } else if (isLab) {
+    const itemCount = course.sections ? course.sections.reduce((acc, s) => acc + (s.items ? s.items.length : 0), 0) : 0;
+    const btnLabel = itemCount > 0 
+      ? `تصفح تجارب وملفات المعمل (${itemCount})` 
+      : 'تصفح تجارب وملفات المعمل';
     actionBtnHTML = `
-      <a href="${course.socialLinks[0].url}" target="_blank" rel="noopener noreferrer" class="btn btn-whatsapp" style="width: 100%;">
-        <i data-lucide="message-circle" class="lucide-sm"></i>
-        <span>انضمام لمجموعة المعمل (WhatsApp)</span>
-      </a>
+      <button class="btn btn-primary" onclick="openCourseModal('${course.id}')" style="width: 100%;">
+        <i data-lucide="flask-conical" class="lucide-sm"></i>
+        <span>${btnLabel}</span>
+      </button>
     `;
   } else {
     actionBtnHTML = `
@@ -212,18 +219,22 @@ function createCourseCardHTML(course) {
     `;
   }
 
+  const badgeHTML = isLab
+    ? `<span class="card-code-badge" style="background: rgba(30, 77, 43, 0.1); color: var(--color-primary); border-color: rgba(30, 77, 43, 0.3);">معمل عملي • ${course.code}</span>`
+    : `<span class="card-code-badge">مقرر نظري • ${course.code}</span>`;
+
   return `
     <article class="course-card">
       <div>
         <div class="card-top-row">
-          <span class="card-code-badge">${course.code}</span>
+          ${badgeHTML}
           <span class="card-icon-square">
-            <i data-lucide="${course.icon || 'book-open'}"></i>
+            <i data-lucide="${course.icon || (isLab ? 'flask-conical' : 'book-open')}"></i>
           </span>
         </div>
 
         <h3 class="card-title">
-          ${course.pageUrl ? `<a href="${course.pageUrl}">${course.title}</a>` : course.title}
+          ${course.pageUrl ? `<a href="${course.pageUrl}">${course.title}</a>` : `<a href="javascript:void(0)" onclick="openCourseModal('${course.id}')">${course.title}</a>`}
         </h3>
         <span class="card-eng-subtitle">${course.englishTitle}</span>
         <p class="card-description">${course.description}</p>

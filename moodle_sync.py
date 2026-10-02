@@ -43,11 +43,14 @@ BASE_DIR = Path(__file__).resolve().parent
 ENV_PATH = BASE_DIR / ".env"
 DATA_JS_PATH = BASE_DIR / "data.js"
 
-# خريطة المقررات المعتمدة في البوابة
+# خريطة المقررات المعتمدة في البوابة (المقررات النظرية والمعامل التطبيقية)
 KNOWN_COURSES = [
+    # --- المقررات النظرية (Theory) ---
     {
         "id": "os",
+        "db_id": "os",
         "moodle_id": 12297,
+        "is_lab": False,
         "keywords": ["نظم تشغيل", "operating systems", "ecom4401"],
         "folder": "OS",
         "page": "course-os.html",
@@ -57,7 +60,9 @@ KNOWN_COURSES = [
     },
     {
         "id": "data_comm",
+        "db_id": "data_comm",
         "moodle_id": 4455,
+        "is_lab": False,
         "keywords": ["اتصالات بيانات", "data communication", "data communications", "ecom4411"],
         "folder": "DataCom",
         "page": "course-datacom.html",
@@ -67,11 +72,53 @@ KNOWN_COURSES = [
     },
     {
         "id": "assembly",
+        "db_id": "assembly",
         "moodle_id": 2463,
+        "is_lab": False,
         "keywords": ["تنظيم حاسوب", "أسمبلي", "تجميع", "assembly", "ecom4403", "ecom4412"],
         "folder": "Assembly",
         "page": "course-assembly.html",
         "title": "تنظيم حاسوب ولغة أسمبلي",
+        "video_fn": "playYouTube",
+        "links_file": "link.txt"
+    },
+    # --- المعامل والتطبيقات العملية (Laboratories) ---
+    {
+        "id": "data_comm_lab",
+        "db_id": "data_comm_lab",
+        "moodle_id": 12191,
+        "is_lab": True,
+        "parent_id": "data_comm",
+        "keywords": ["اتصالات بيانات", "data communication", "data communications", "ecom4002"],
+        "folder": "DataCom",
+        "page": "course-datacom-lab.html",
+        "title": "اتصالات بيانات (عملي)",
+        "video_fn": "playVideo",
+        "links_file": "links.txt"
+    },
+    {
+        "id": "os_lab",
+        "db_id": "os_lab",
+        "moodle_id": 12168,
+        "is_lab": True,
+        "parent_id": "os",
+        "keywords": ["نظم تشغيل", "operating systems", "ecom4001"],
+        "folder": "OS",
+        "page": "course-os-lab.html",
+        "title": "نظم تشغيل (عملي)",
+        "video_fn": "playVideo",
+        "links_file": "links.txt"
+    },
+    {
+        "id": "assembly_lab",
+        "db_id": "assembly_lab",
+        "moodle_id": 12220,
+        "is_lab": True,
+        "parent_id": "assembly",
+        "keywords": ["تنظيم حاسوب", "أسمبلي", "تجميع", "assembly", "ecom4003"],
+        "folder": "Assembly",
+        "page": "course-assembly-lab.html",
+        "title": "لغة تجميع (عملي)",
         "video_fn": "playYouTube",
         "links_file": "link.txt"
     }
@@ -101,17 +148,34 @@ def extract_youtube_id(url):
     return m.group(1) if m else None
 
 
-def extract_chapter_info(title, section_name=""):
-    """استخراج رقم الفصل واسمه المنطقي من عنوان العنصر أو اسم القسم"""
+def extract_section_info(title, section_name="", is_lab=False):
+    """استخراج رقم واسم القسم المنطقي من عنوان العنصر أو اسم القسم (سواء فصل أو معمل)"""
     combined = f"{section_name} {title}"
-    m = re.search(r'(?:ch(?:apter)?[-_\s]*|0)(\d+)', combined, re.IGNORECASE)
-    if m:
+    
+    # 1. التحقق إن كان نشاط معمل / تجربة عملية
+    lab_m = re.search(r'(?:lab|معمل|تجربة)[-_\s]*(\d+)', combined, re.IGNORECASE)
+    if lab_m or is_lab:
+        if lab_m:
+            num = int(lab_m.group(1))
+            return f"Lab {num}: تجارب المعمل", num
+        return "المعمل والتطبيقات العملية (Labs)", None
+
+    # 2. التحقق إن كان فصلاً دراسياً نظرياً (Chapter)
+    ch_m = re.search(r'(?:ch(?:apter)?[-_\s]*|0)(\d+)', combined, re.IGNORECASE)
+    if ch_m:
         try:
-            ch_num = int(m.group(1))
-            return ch_num, f"Chapter {ch_num}"
+            ch_num = int(ch_m.group(1))
+            return f"Chapter {ch_num}", ch_num
         except ValueError:
             pass
+
     return None, None
+
+
+def extract_chapter_info(title, section_name=""):
+    """استخراج معلومات الفصل للتوافق الرجعي"""
+    name, num = extract_section_info(title, section_name, is_lab=False)
+    return num, name
 
 
 class IUGMoodleSync:
@@ -216,12 +280,13 @@ class IUGMoodleSync:
                         combined = f"{fullname} {shortname}".lower()
 
                         matched_info = None
-                        is_lab = ("عملي" in combined) or ("lab" in combined)
+                        is_lab = ("عملي" in combined) or ("lab" in combined) or any(c in combined for c in ["4001", "4002", "4003"])
                         for mapping in KNOWN_COURSES:
                             if mapping["moodle_id"] == cid:
                                 matched_info = mapping
                                 break
-                            if not is_lab and any(kw in combined for kw in mapping["keywords"]):
+                            m_is_lab = mapping.get("is_lab", False)
+                            if (is_lab == m_is_lab) and any(kw in combined for kw in mapping["keywords"]):
                                 matched_info = mapping
                                 break
 
@@ -248,11 +313,31 @@ class IUGMoodleSync:
 
         print(f"[INFO] Found {len(courses)} enrolled course(s):")
         for c in courses:
-            status_text = f"-> [Linked to: {c['mapping']['folder']}/ ({c['mapping']['page']})]" if c['mapping'] else "(Not in portal)"
+            if c['mapping']:
+                course_type = "معمل عملي" if c['mapping'].get('is_lab') else "نظري"
+                status_text = f"-> [Linked to: {c['mapping']['folder']}/ ({c['mapping']['page']}) - {course_type}]"
+            else:
+                status_text = "(Not in portal)"
             display_title = c.get("shortname") or c.get("title") or f"Course {c['id']}"
             print(f"   * [{c['id']}] {display_title} {status_text}")
 
         return courses
+
+    def _handle_whatsapp_link(self, url, mapping, title):
+        """التحقق من روابط مجموعات الواتساب وتحديث ملف linkslabs.txt إن لزم"""
+        try:
+            links_lab_path = BASE_DIR / "linkslabs.txt"
+            if mapping.get("is_lab"):
+                existing = links_lab_path.read_text(encoding="utf-8") if links_lab_path.exists() else ""
+                if url not in existing:
+                    entry = f"{mapping['title']}/{url}\n"
+                    with open(links_lab_path, "a", encoding="utf-8") as f:
+                        f.write(entry)
+                    print(f"   [WHATSAPP] Added {mapping['title']} WhatsApp link to linkslabs.txt")
+                else:
+                    print(f"   [WHATSAPP] Verified WhatsApp group for {mapping['title']}.")
+        except Exception as e:
+            print(f"   [WARN] Error registering WhatsApp link: {e}")
 
     def sync_course(self, course_info):
         """فحص وتنزيل محتويات المقرر المربوط (ملفات وروابط محاضرات وفيديوهات)"""
@@ -270,7 +355,9 @@ class IUGMoodleSync:
         links_file_path = folder_path / links_file_name
         existing_links_text = links_file_path.read_text(encoding="utf-8") if links_file_path.exists() else ""
 
-        print(f"\n[SCAN] Checking course: {mapping['id'].upper()} ({mapping['folder']}/)...")
+        is_lab = mapping.get("is_lab", False)
+        type_badge = "LAB" if is_lab else "THEORY"
+        print(f"\n[SCAN] Checking course: {mapping['id'].upper()} ({mapping['folder']}/) [{type_badge}]...")
         r = self.session.get(course_info["url"], timeout=25)
         page_html = r.text
 
@@ -318,6 +405,8 @@ class IUGMoodleSync:
                 file_info = self._download_file_if_new(res_url, folder_path, act_name, existing_page_text)
                 if file_info:
                     file_info["section_name"] = sec_name
+                    file_info["is_lab"] = is_lab
+                    file_info["mapping"] = mapping
                     downloaded_new_files.append(file_info)
 
             # ب) روابط المحاضرات والفيديوهات (url)
@@ -329,6 +418,12 @@ class IUGMoodleSync:
 
                 target_url = self._resolve_url_activity(act_id)
                 if not target_url:
+                    continue
+                target_url = target_url.replace("&amp;", "&")
+
+                # إذا كان الرابط هو رابط مجتمع / مجموعة واتساب
+                if "chat.whatsapp.com" in target_url:
+                    self._handle_whatsapp_link(target_url, mapping, act_name)
                     continue
 
                 yt_id = extract_youtube_id(target_url)
@@ -345,6 +440,8 @@ class IUGMoodleSync:
                         "youtube_id": yt_id,
                         "folder": folder_name,
                         "section_name": sec_name,
+                        "is_lab": is_lab,
+                        "mapping": mapping,
                         "video_fn": mapping.get("video_fn", "playVideo")
                     })
 
@@ -487,12 +584,14 @@ def update_course_pages_with_items(new_files, new_links):
     if not all_items:
         return
 
-    items_by_folder = {}
+    items_by_course = {}
     for it in all_items:
-        items_by_folder.setdefault(it["folder"], []).append(it)
+        mapping = it.get("mapping")
+        cid = mapping.get("id") if mapping else it.get("folder")
+        items_by_course.setdefault(cid, {"mapping": mapping, "items": []})["items"].append(it)
 
-    for folder, items in items_by_folder.items():
-        mapping = next((m for m in KNOWN_COURSES if m["folder"] == folder), None)
+    for cid, cdata in items_by_course.items():
+        mapping = cdata["mapping"]
         if not mapping:
             continue
 
@@ -500,6 +599,7 @@ def update_course_pages_with_items(new_files, new_links):
         if not page_name:
             continue
 
+        items = cdata["items"]
         html_path = BASE_DIR / page_name
         if not html_path.exists():
             continue
@@ -627,11 +727,63 @@ def update_course_pages_with_items(new_files, new_links):
                 </button>
               </div>
             </div>'''
-                    ch_num, _ = extract_chapter_info(title, it.get("section_name", ""))
+                is_lab_item = it.get("is_lab", False) or (mapping and mapping.get("is_lab", False))
+                sec_label, ch_num = extract_section_info(it.get("filename") or it.get("title"), it.get("section_name", ""), is_lab=is_lab_item)
 
-                # إدراج العنصر داخل قسم الفصل المناسب في الصفحة
+                # إدراج العنصر داخل قسم الفصل أو المعمل المناسب في الصفحة
                 section_found = False
-                if ch_num is not None:
+                if is_lab_item:
+                    lab_pattern = re.compile(
+                        r'(<section[^>]*class=["\'][^"\']*moodle-section-card[^"\']*["\'][^>]*id=["\']lab-section["\'][^>]*>[\s\S]*?<div[^>]*class=["\'][^"\']*moodle-files-list[^"\']*["\'][^>]*>)([\s\S]*?)(</div>\s*</div>\s*</section>)',
+                        re.IGNORECASE
+                    )
+                    m_lab = lab_pattern.search(html_text)
+                    if not m_lab:
+                        lab_pattern = re.compile(
+                            r'(<section[^>]*class=["\'][^"\']*moodle-section-card[^"\']*["\'][^>]*>[\s\S]*?<div[^>]*class=["\'][^"\']*moodle-section-head[^"\']*["\'][^>]*>[\s\S]*?(?:المعمل|Lab Experiments|تجارب المعمل)[\s\S]*?<div[^>]*class=["\'][^"\']*moodle-files-list[^"\']*["\'][^>]*>)([\s\S]*?)(</div>\s*</div>\s*</section>)',
+                            re.IGNORECASE
+                        )
+                        m_lab = lab_pattern.search(html_text)
+
+                    if m_lab:
+                        before = m_lab.group(1)
+                        content = m_lab.group(2)
+                        after = m_lab.group(3)
+                        updated_sec = f"{before}{content}\n{row_html}\n          {after}"
+                        html_text = html_text[:m_lab.start()] + updated_sec + html_text[m_lab.end():]
+                        section_found = True
+                        modified = True
+                        print(f"   [HTML] Added {it.get('filename') or it.get('title')} to Lab Section in ({page_name}).")
+                    else:
+                        lab_title = f"المعمل والتطبيقات العملية ({mapping.get('title', 'Lab')})"
+                        new_section_card = f'''
+      <!-- ========================================================
+           القسم: {lab_title}
+           ======================================================== -->
+      <section class="moodle-section-card" id="lab-section">
+        <div class="moodle-section-head">
+          <h3>
+            <i data-lucide="flask-conical" class="lucide-sm" style="color: var(--color-primary);"></i>
+            <span>{lab_title}</span>
+          </h3>
+          <span class="stat-pill" style="border-color: var(--color-primary); color: var(--color-primary);">تجارب المعمل</span>
+        </div>
+        <div class="moodle-section-body">
+          <div class="moodle-files-list">
+{row_html}
+          </div>
+        </div>
+      </section>
+'''
+                        close_wrap_match = re.search(r'(\s*</div>\s*</main>)', html_text)
+                        if close_wrap_match:
+                            pos = close_wrap_match.start(1)
+                            html_text = html_text[:pos] + new_section_card + html_text[pos:]
+                            section_found = True
+                            modified = True
+                            print(f"   [HTML] Created Lab Section with {it.get('filename') or it.get('title')} in ({page_name}).")
+
+                elif ch_num is not None:
                     sec_pattern = re.compile(
                         rf'(<section[^>]*class=["\'][^"\']*moodle-section-card[^"\']*["\'][^>]*>[\s\S]*?Chapter\s*{ch_num}[:\s\(\)][\s\S]*?<div[^>]*class=["\'][^"\']*moodle-files-list[^"\']*["\'][^>]*>)([\s\S]*?)(</div>\s*</div>\s*</section>)',
                         re.IGNORECASE
@@ -649,7 +801,7 @@ def update_course_pages_with_items(new_files, new_links):
 
                 # إذا لم يكن قسم الشابتر موجوداً، ننشئ قسماً جديداً له
                 if not section_found:
-                    heading_title = f"Chapter {ch_num}: {it.get('title') or it.get('filename')}" if ch_num is not None else (it.get('title') or it.get('filename'))
+                    heading_title = sec_label or (it.get('title') or it.get('filename'))
                     new_section_card = f'''
       <!-- ========================================================
            القسم: {heading_title}
@@ -701,8 +853,17 @@ def update_database_with_items(new_files, new_links):
         added_count = 0
         for it in all_items:
             kind = it["kind"]
+            mapping = it.get("mapping")
             folder = it["folder"]
-            course_id = "os" if folder == "OS" else ("data_comm" if folder == "DataCom" else "assembly")
+            is_lab = it.get("is_lab", False) or (mapping and mapping.get("is_lab", False))
+
+            # تحديد معرّف المساق في قاعدة البيانات (data.js)
+            if mapping and mapping.get("db_id"):
+                course_id = mapping["db_id"]
+            elif is_lab:
+                course_id = f"{folder.lower()}_lab"
+            else:
+                course_id = "os" if folder == "OS" else ("data_comm" if folder == "DataCom" else "assembly")
 
             if kind == "file":
                 rel_path = it["relative_path"]
@@ -711,9 +872,10 @@ def update_database_with_items(new_files, new_links):
                 filename = it["filename"]
                 ext = Path(filename).suffix.lower().replace(".", "")
                 ftype = "ppt" if ext in ["ppt", "pptx"] else ("pdf" if ext == "pdf" else ("video" if ext in ["mp4", "webm"] else "doc"))
-                item_title = Path(filename).stem
+                stem = Path(filename).stem
+                item_title = stem.replace("__", " - ").replace("_", " ").strip()
                 item_path = rel_path
-                ch_num, _ = extract_chapter_info(filename, it.get("section_name", ""))
+                sec_label, ch_num = extract_section_info(filename, it.get("section_name", ""), is_lab=is_lab)
             else:
                 url = it["url"]
                 yt_id = it.get("youtube_id")
@@ -722,7 +884,7 @@ def update_database_with_items(new_files, new_links):
                 item_title = it["title"]
                 item_path = url
                 ftype = "video" if yt_id else "link"
-                ch_num, _ = extract_chapter_info(item_title, it.get("section_name", ""))
+                sec_label, ch_num = extract_section_info(item_title, it.get("section_name", ""), is_lab=is_lab)
 
             course_marker = f'id: "{course_id}"'
             c_idx = data_text.find(course_marker)
@@ -751,7 +913,10 @@ def update_database_with_items(new_files, new_links):
             course_sections_str = data_text[sec_idx:close_idx]
 
             found_existing_section = False
-            if ch_num is not None:
+            sec_icon = "flask-conical" if is_lab else "folder"
+            target_sec_title = sec_label or ("تجارب المعمل (Labs)" if is_lab else (f"Chapter {ch_num}" if ch_num is not None else item_title))
+
+            if not is_lab and ch_num is not None:
                 ch_pattern = re.compile(rf'(title:\s*["\'][^"\']*Chapter\s*{ch_num}[:\s\(\)][^"\']*["\'][\s\S]*?items:\s*\[)([\s\S]*?)(\])', re.IGNORECASE)
                 m_ch = ch_pattern.search(course_sections_str)
                 if m_ch:
@@ -760,18 +925,31 @@ def update_database_with_items(new_files, new_links):
                     data_text = data_text[:abs_insert_pos] + new_item_str + data_text[abs_insert_pos:]
                     found_existing_section = True
                     added_count += 1
+            elif is_lab:
+                lab_pattern = re.compile(r'(title:\s*["\'][^"\']*(?:Labs|المعمل|تجارب)[^"\']*["\'][\s\S]*?items:\s*\[)([\s\S]*?)(\])', re.IGNORECASE)
+                m_lab = lab_pattern.search(course_sections_str)
+                if m_lab:
+                    abs_insert_pos = sec_idx + m_lab.end(1)
+                    new_item_str = f'\n          {{ title: "{item_title}", type: "{ftype}", path: "{item_path}" }},'
+                    data_text = data_text[:abs_insert_pos] + new_item_str + data_text[abs_insert_pos:]
+                    found_existing_section = True
+                    added_count += 1
 
             if not found_existing_section:
-                sec_title = f"Chapter {ch_num}: {item_title}" if ch_num is not None else item_title
+                sec_title = target_sec_title
                 new_section = f'''      {{
         title: "{sec_title}",
-        icon: "folder",
+        icon: "{sec_icon}",
         items: [
           {{ title: "{item_title}", type: "{ftype}", path: "{item_path}" }}
         ]
       }},
 '''
-                data_text = data_text[:close_idx] + new_section + "    " + data_text[close_idx:]
+                inner_content = course_sections_str[len("sections: ["):].strip()
+                if not inner_content:
+                    data_text = data_text[:sec_idx + len("sections: [")] + "\n" + new_section + "    " + data_text[close_idx:]
+                else:
+                    data_text = data_text[:close_idx] + new_section + "    " + data_text[close_idx:]
                 added_count += 1
 
         if added_count > 0:
@@ -782,33 +960,53 @@ def update_database_with_items(new_files, new_links):
         print(f"   [WARN] Could not update data.js automatically: {e}")
 
 
-def run_git_sync(new_files, new_links):
-    """إجراء commit و push إلى مستودع الاستضافة"""
+def run_git_sync(new_files=None, new_links=None):
+    """إجراء commit و push إلى مستودع الاستضافة بشكل تلقائي وموثوق"""
+    new_files = new_files or []
+    new_links = new_links or []
     total_count = len(new_files) + len(new_links)
-    if total_count == 0:
-        return
 
-    print("\n[GIT] Preparing updates and pushing to GitHub...")
+    print("\n[GIT] Synchronizing and pushing updates to remote repository (GitHub Pages)...")
     try:
+        # 1. إضافة كافة الملفات والتعديلات
         subprocess.run(["git", "add", "."], cwd=BASE_DIR, check=True)
-        courses = list(set([it["folder"] for it in new_files + new_links]))
-        sample_names = [it.get("filename") or it.get("title") for it in (new_files + new_links)[:3]]
-        sample_str = ", ".join(sample_names)
-        if total_count > 3:
-            sample_str += f" (+{total_count-3} items)"
-            
-        commit_msg = f"feat(moodle-sync): add new materials for {', '.join(courses)} ({sample_str})"
-        subprocess.run(["git", "commit", "-m", commit_msg], cwd=BASE_DIR, check=True)
-        print("   [OK] Git commit created successfully.")
 
-        print("   [GIT] Pushing to remote repository (git push origin main)...")
+        # 2. فحص إن كان هناك تغييرات غير محفوظة (Uncommitted changes)
+        status_res = subprocess.run(["git", "status", "--porcelain"], cwd=BASE_DIR, capture_output=True, text=True, check=True)
+        has_changes = bool(status_res.stdout.strip())
+
+        if has_changes:
+            if total_count > 0:
+                courses = list(set([it.get("mapping", {}).get("title") or it["folder"] for it in new_files + new_links]))
+                sample_names = [it.get("filename") or it.get("title") for it in (new_files + new_links)[:3]]
+                sample_str = ", ".join(sample_names)
+                if total_count > 3:
+                    sample_str += f" (+{total_count-3} items)"
+                commit_msg = f"feat(moodle-sync): sync {total_count} new materials for {', '.join(courses)} ({sample_str})"
+            else:
+                commit_msg = "chore(sync): update course materials, lab pages, and links"
+
+            commit_res = subprocess.run(["git", "commit", "-m", commit_msg], cwd=BASE_DIR, capture_output=True, text=True)
+            if commit_res.returncode == 0:
+                print("   [OK] Git commit created successfully.")
+            else:
+                print(f"   [INFO] Git commit status: {commit_res.stdout.strip() or commit_res.stderr.strip()}")
+        else:
+            print("   [INFO] Local working tree is clean (no uncommitted file modifications).")
+
+        # 3. دفع التحديثات إلى المستودع البعيد (git push origin main)
+        print("   [GIT] Pushing commits to remote repository (git push origin main)...")
         push_res = subprocess.run(["git", "push", "origin", "main"], cwd=BASE_DIR, capture_output=True, text=True)
         if push_res.returncode == 0:
-            print("   [SUCCESS] Updates pushed to GitHub successfully!")
+            if "Everything up-to-date" in push_res.stdout or "Everything up-to-date" in push_res.stderr:
+                print("   [OK] Remote repository is already fully up to date.")
+            else:
+                print("   [SUCCESS] All updates and materials pushed to GitHub hosting successfully!")
         else:
-            print(f"   [WARN] Push failed: {push_res.stderr}")
+            err_msg = push_res.stderr.strip() or push_res.stdout.strip()
+            print(f"   [WARN] Git push warning/error: {err_msg}")
     except Exception as e:
-        print(f"   [ERROR] Git execution error: {e}")
+        print(f"   [ERROR] Git sync execution error: {e}")
 
 
 def main():
@@ -876,13 +1074,15 @@ def main():
         # Always update local database and course pages
         update_course_pages_with_items(all_new_files, all_new_links)
         update_database_with_items(all_new_files, all_new_links)
-
-        if auto_push:
-            run_git_sync(all_new_files, all_new_links)
-        else:
-            print("\n[INFO] Files saved and website updated locally (auto-push disabled).")
     else:
-        print("[OK] All courses are fully up to date. All files and video lectures are synchronized!")
+        print("[OK] All courses are fully up to date. No new materials found on Moodle.")
+
+    # Always synchronize and push to remote if auto_push is enabled
+    if auto_push:
+        run_git_sync(all_new_files, all_new_links)
+    else:
+        print("\n[INFO] Auto-push is disabled (AUTO_GIT_PUSH=false or --no-push used).")
+
     print("=" * 65)
 
 

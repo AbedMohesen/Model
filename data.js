@@ -253,6 +253,7 @@ var COURSES_DATA = [
   {
     id: "data_comm_lab",
     code: "ECOM4002-6439",
+    pageUrl: "course-datacom-lab.html",
     title: "اتصالات بيانات (عملي)",
     englishTitle: "Data Communications Lab",
     category: "lab",
@@ -263,11 +264,21 @@ var COURSES_DATA = [
     socialLinks: [
       { type: "whatsapp", label: "مجموعة الواتس لمعمل الاتصالات", url: "https://chat.whatsapp.com/CRbZGiixjU96D5cDrSUR4F", note: "جروب المعمل الرسمي للمناقشة والتسليمات" }
     ],
-    sections: []
+    sections: [
+      {
+        title: "Lab 1: تجارب المعمل",
+        icon: "flask-conical",
+        items: [
+          { title: "Lab 1 - تسجيل وتجربة المعمل الأولى", type: "video", path: "https://www.youtube.com/watch?v=2DI0YVuM5nA&list=PLVrdY3SfDg98" },
+          { title: "Lab 1 - أساسيات اتصالات البيانات وشبكات الحاسوب (Fundamentals of Data Communications)", type: "pdf", path: "DataCom/lab1__Fundamentals_of_data_communications_and_computer_networks.pdf" }
+        ]
+      },
+    ]
   },
   {
     id: "os_lab",
     code: "ECOM4001-6436",
+    pageUrl: "course-os-lab.html",
     title: "نظم تشغيل (عملي)",
     englishTitle: "Operating Systems Lab",
     category: "lab",
@@ -283,6 +294,7 @@ var COURSES_DATA = [
   {
     id: "assembly_lab",
     code: "ECOM4003-6427",
+    pageUrl: "course-assembly-lab.html",
     title: "لغة تجميع (عملي)",
     englishTitle: "Assembly Language Lab",
     category: "lab",

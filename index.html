@@ -152,6 +152,55 @@
     </div>
   </main>
 
+  <!-- نافذة تفاصيل المقرر والملفات (Course Modal) -->
+  <div id="courseModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div>
+          <span id="modalCourseCode" class="card-code-badge" style="margin-left: 8px;"></span>
+          <h3 id="modalCourseTitle" style="display: inline-block; font-size: 16px; font-weight: 700; color: var(--color-ink); vertical-align: middle;">تفاصيل المادة</h3>
+          <div id="modalCourseEngTitle" style="font-size: 12px; color: var(--color-graphite); margin-top: 2px;"></div>
+        </div>
+        <button class="btn btn-outline-ink btn-sm" onclick="closeCourseModal()" title="إغلاق">
+          <i data-lucide="x" class="lucide-sm"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- روابط التواصل والمجموعات -->
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-ink); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="message-circle" class="lucide-sm" style="color: var(--whatsapp-color);"></i>
+            <span>مجموعات التواصل المباشر:</span>
+          </div>
+          <div id="modalSocialLinks" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
+
+        <!-- التكليفات والواجبات إن وجدت -->
+        <div id="modalAssignmentsSection" style="display: none; margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-bloom-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="alert-circle" class="lucide-sm"></i>
+            <span>التكليفات والواجبات المستحقة:</span>
+          </div>
+          <div id="modalAssignmentsList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <!-- قائمة الفصول وتجارب المعمل والملفات -->
+        <div>
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-ink); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+            <i data-lucide="folder" class="lucide-sm" style="color: var(--color-primary);"></i>
+            <span>الملفات والمحاضرات والتجارب:</span>
+          </div>
+          <div id="modalSectionsList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary btn-sm" onclick="closeCourseModal()">إغلاق النافذة</button>
+      </div>
+    </div>
+  </div>
+
   <!-- عنصر التنبيه Toast -->
   <div id="toastNotification" class="toast-container" style="display: none;">
     <i data-lucide="check-circle" class="lucide-sm" style="color: var(--whatsapp-color);"></i>
