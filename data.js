@@ -106,6 +106,7 @@ var COURSES_DATA = [
         title: "Chapter 1: Introduction",
         icon: "folder",
         items: [
+          { title: "Lecture 2 part 2, Chapter 1", type: "video", path: "https://youtu.be/OtG3wOwrNnM" },
           { title: "Lecture 2 part 1, Chapter 1:  Storage Structure &amp;amp; Multiprogramming.", type: "video", path: "https://youtu.be/vp9Bj8Lttlo" },
           { title: "Chapter 1: Introduction - سلايدات الفصل الأول", type: "ppt", path: "OS/ch1.pptx" },
           { title: "Chapter 1: Introduction, Lecture 1 part 1 - تسجيل المحاضرة الأولى (الجزء 1)", type: "video", path: "https://www.youtube.com/watch?v=UKrWWFVM6uM" },
