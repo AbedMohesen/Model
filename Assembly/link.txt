@@ -6,3 +6,5 @@ Chapter1 Assembly/https://www.youtube.com/watch?v=SWLzb2xuBZE
 Chapter3_Lecture#2/https://drive.google.com/file/d/1at03W_r_bN6KofpFYHSAGCGzY0fKl9_s/view
 Chapter2_lecture#1/https://youtu.be/-NJxlwUl8lM
 Chapter2_lecture#2/https://youtu.be/bpNRf2F7gvI
+Visual Studio Download / https://visualstudio.microsoft.com/
+Lab 00 - Lecture / https://youtu.be/H_23IYTr3bg

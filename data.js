@@ -307,7 +307,17 @@ var COURSES_DATA = [
     socialLinks: [
       { type: "whatsapp", label: "مجموعة الواتساب لمعمل لغة التجميع", url: "https://chat.whatsapp.com/KSehBCCLCkAElrUYeHKbXp", note: "جروب المعمل الرسمي للمناقشة" }
     ],
-    sections: []
+    sections: [
+      {
+        title: "Lab 0: تجارب المعمل",
+        icon: "flask-conical",
+        items: [
+          { title: "Lab 00 - Lecture", type: "video", path: "https://youtu.be/H_23IYTr3bg" },
+          { title: "Visual Studio Download", type: "link", path: "https://visualstudio.microsoft.com/" },
+          { title: "Assembly Lab 0", type: "pdf", path: "Assembly/Assembly Lab_0.pdf" }
+        ]
+      },
+    ]
   }
 ];
 
