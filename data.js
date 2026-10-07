@@ -75,6 +75,20 @@ var COURSES_DATA = [
           { title: "Shannon - سعة القناة ونظرية شانون", type: "video", path: "https://www.youtube.com/watch?v=kTyKGZAWsOs" },
           { title: "ch3_Performance - مقاييس أداء الشبكة", type: "video", path: "https://www.youtube.com/watch?v=b8z5uY7QSGg" }]
       }
+          {
+        title: "Chapter 26",
+        icon: "folder",
+        items: [
+          { title: "لقاء 1 أونلاين طالبات 2026", type: "video", path: "https://youtu.be/0ZSClkep7OQ?si=IXSTpQVC_rrBcZOX" }
+        ]
+      },
+          {
+        title: "Chapter 26",
+        icon: "folder",
+        items: [
+          { title: "لقاء 1 أونلاين طلاب 2026", type: "link", path: "https://drive.google.com/file/d/1XqJJLI3XDZKD2_awODvp2-CZUleZ9tEd/view?usp=sharing" }
+        ]
+      },
     ]
   },
   {
